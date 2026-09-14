@@ -1,0 +1,837 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<title>بوكوز — المحاسب الشخصي</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<style>
+  :root{
+    --bg:#12151b;
+    --panel:#191d25;
+    --panel-2:#1f242e;
+    --border:rgba(255,255,255,0.08);
+    --border-strong:rgba(255,255,255,0.14);
+    --gold:#c7962c;
+    --gold-soft:#e9c874;
+    --green:#4f9d69;
+    --green-soft:#8fc7a2;
+    --red:#c1512f;
+    --red-soft:#e08a6c;
+    --text:#edeae0;
+    --text-2:#9b9c9e;
+    --text-3:#6c6d70;
+  }
+  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
+  html{-webkit-text-size-adjust:100%;}
+  body{
+    margin:0;
+    background:var(--bg);
+    color:var(--text);
+    font-family:'Cairo',sans-serif;
+    padding:18px 14px 60px;
+    font-size:15px;
+  }
+  .wrap{max-width:640px;margin:0 auto;}
+
+  header{
+    border-bottom:1px solid var(--border);
+    padding-bottom:16px;
+    margin-bottom:16px;
+  }
+  h1{
+    font-weight:700;
+    font-size:24px;
+    margin:0;
+    color:var(--gold-soft);
+  }
+  header p{margin:4px 0 12px;color:var(--text-2);font-size:13.5px;}
+  .today{color:var(--text-2);font-size:13px;}
+  .today span{color:var(--text);font-size:14.5px;font-weight:600;}
+
+  .navtabs{display:flex;gap:6px;background:var(--panel-2);border-radius:10px;padding:4px;margin-bottom:18px;}
+  .navtabs button{
+    margin:0;flex:1;padding:10px 6px;background:transparent;color:var(--text-2);
+    border-radius:8px;font-weight:700;font-size:14px;min-height:auto;border:none;font-family:'Cairo',sans-serif;cursor:pointer;
+  }
+  .navtabs button.active{background:var(--gold);color:#1a1400;}
+
+  .page{display:none;}
+  .page.active{display:block;}
+
+  .verdict{
+    border-radius:10px;
+    padding:14px 16px;
+    margin-bottom:16px;
+    font-size:14.5px;
+    line-height:1.6;
+    font-weight:600;
+    border:1px solid var(--border);
+  }
+  .verdict.pos{background:rgba(79,157,105,0.12);color:var(--green-soft);border-color:rgba(79,157,105,0.3);}
+  .verdict.neg{background:rgba(193,81,47,0.12);color:var(--red-soft);border-color:rgba(193,81,47,0.3);}
+  .verdict.neutral{background:var(--panel);color:var(--text-2);}
+
+  .metrics{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:18px;}
+  .metric{background:var(--panel);border:1px solid var(--border);border-radius:10px;padding:14px 14px;}
+  .metric.net{grid-column:1 / -1;}
+  .metric .label{font-size:12.5px;color:var(--text-2);margin-bottom:6px;}
+  .metric .value{font-size:22px;font-weight:700;}
+  .metric.profit .value{color:var(--green-soft);}
+  .metric.charges .value{color:var(--red-soft);}
+  .metric.net .value.pos{color:var(--green-soft);}
+  .metric.net .value.neg{color:var(--red-soft);}
+
+  .panels{display:flex;flex-direction:column;gap:14px;margin-bottom:18px;}
+  .card{background:var(--panel);border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:14px;}
+  .card h2{font-weight:700;font-size:16px;margin:0 0 12px;color:var(--text);}
+  label{display:block;font-size:12.5px;color:var(--text-2);margin:12px 0 5px;}
+  label:first-of-type{margin-top:0;}
+  input,select{
+    width:100%;
+    background:var(--panel-2);
+    border:1px solid var(--border-strong);
+    color:var(--text);
+    border-radius:8px;
+    padding:12px 12px;
+    font-size:16px;
+    font-family:'Cairo',sans-serif;
+    min-height:46px;
+  }
+  input:focus,select:focus{outline:none;border-color:var(--gold);}
+  button{
+    margin-top:16px;
+    width:100%;
+    background:var(--gold);
+    color:#1a1400;
+    border:none;
+    border-radius:8px;
+    padding:13px;
+    font-size:15.5px;
+    font-weight:700;
+    font-family:'Cairo',sans-serif;
+    cursor:pointer;
+    min-height:48px;
+  }
+  button:active{background:var(--gold-soft);}
+  button.secondary{background:transparent;border:1px solid var(--border-strong);color:var(--text-2);font-weight:500;min-height:auto;padding:8px 12px;font-size:13px;width:auto;margin:0;}
+  .err{color:var(--red-soft);font-size:12.5px;margin-top:6px;display:none;}
+
+  .section-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;flex-wrap:wrap;gap:8px;}
+  .tabs{display:flex;gap:4px;background:var(--panel-2);border-radius:8px;padding:3px;width:100%;}
+  .tabs button{
+    margin:0;flex:1;padding:9px 4px;background:transparent;color:var(--text-2);
+    border-radius:6px;font-weight:600;font-size:13.5px;min-height:auto;
+  }
+  .tabs button.active{background:var(--gold);color:#1a1400;}
+  .tabs button:active:not(.active){background:transparent;}
+
+  .chart-box{position:relative;height:210px;margin-bottom:8px;}
+  .legend{display:flex;gap:14px;font-size:12.5px;color:var(--text-2);margin-bottom:6px;}
+  .legend span{display:inline-flex;align-items:center;gap:6px;}
+  .dot{width:9px;height:9px;border-radius:2px;display:inline-block;flex-shrink:0;}
+
+  .insight{
+    background:var(--panel-2);
+    border-right:3px solid var(--gold);
+    border-radius:6px 0 0 6px;
+    padding:12px 14px;
+    font-size:13.5px;
+    line-height:1.9;
+    color:var(--text-2);
+    margin-top:12px;
+  }
+  .insight b{color:var(--gold-soft);font-weight:700;}
+
+  .logRow{
+    display:flex;
+    align-items:center;
+    gap:8px;
+    padding:11px 0;
+    border-bottom:1px solid var(--border);
+  }
+  .logRow:last-child{border-bottom:none;}
+  .logMain{flex:1;min-width:0;}
+  .logTop{display:flex;align-items:center;gap:8px;margin-bottom:3px;flex-wrap:wrap;}
+  .logDate{font-size:12px;color:var(--text-3);}
+  .logDetail{font-size:14px;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .tag{font-size:10.5px;padding:2px 8px;border-radius:20px;flex-shrink:0;}
+  .tag.biz{background:rgba(199,150,44,0.15);color:var(--gold-soft);}
+  .tag.pers{background:rgba(255,255,255,0.08);color:var(--text-2);}
+  .tag.income{background:rgba(79,157,105,0.15);color:var(--green-soft);}
+  .amt{font-size:14.5px;font-weight:700;flex-shrink:0;}
+  .amt.pos{color:var(--green-soft);}
+  .amt.neg{color:var(--red-soft);}
+  .iconBtn{cursor:pointer;color:var(--text-3);background:none;border:none;width:auto;margin:0;padding:7px;font-size:15px;min-height:auto;flex-shrink:0;line-height:1;}
+  .iconBtn:active{color:var(--gold-soft);}
+  .iconBtn.del:active{color:var(--red-soft);}
+  .empty{color:var(--text-3);font-size:13.5px;padding:16px 4px;text-align:center;}
+
+  .editForm{background:var(--panel-2);border:1px solid var(--border-strong);border-radius:10px;padding:12px;margin:8px 0;}
+  .editForm .row2{display:flex;gap:8px;}
+  .editForm .row2>div{flex:1;}
+  .editForm .actions{display:flex;gap:8px;margin-top:12px;}
+  .editForm .actions button{margin:0;min-height:40px;font-size:13.5px;}
+  .editForm .actions button.cancel{background:transparent;border:1px solid var(--border-strong);color:var(--text-2);}
+
+  .contextRow{display:flex;gap:10px;margin-top:12px;}
+  .contextBox{flex:1;background:var(--panel-2);border-radius:8px;padding:10px 12px;}
+  .contextBox .label{font-size:11.5px;color:var(--text-2);margin-bottom:4px;}
+  .contextBox .value{font-size:15px;font-weight:700;color:var(--gold-soft);}
+
+  @media (min-width:600px){
+    body{padding:32px 20px 60px;}
+    .metrics{grid-template-columns:repeat(3,1fr);}
+    .metric.net{grid-column:auto;}
+    .panels{flex-direction:row;}
+    .panels .card{flex:1;}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <h1>Boukouz Sarl</h1>
+    <p>المحاسب الشخصي ديالك — تتبع الربح والمصاريف يوم بيوم</p>
+    <div class="today">اليوم <span id="todayLabel">—</span></div>
+  </header>
+
+  <div class="navtabs">
+    <button data-page="home" class="active">الرئيسية</button>
+    <button data-page="analysis">تحليل حسب اليوم</button>
+  </div>
+
+  <!-- ===== PAGE: HOME ===== -->
+  <div class="page active" id="page-home">
+
+    <div class="verdict neutral" id="verdictBox">دخل الربح والمصاريف ديال اليوم باش نعطيوك الحكم.</div>
+
+    <div class="metrics">
+      <div class="metric profit">
+        <div class="label">الربح اليوم</div>
+        <div class="value" id="mProfit">0 DH</div>
+      </div>
+      <div class="metric charges">
+        <div class="label">المصاريف اليوم</div>
+        <div class="value" id="mCharges">0 DH</div>
+      </div>
+      <div class="metric net">
+        <div class="label">الصافي اليوم</div>
+        <div class="value" id="mNet">0 DH</div>
+      </div>
+    </div>
+
+    <div class="panels">
+      <div class="card">
+        <h2>زيد دخل / ربح</h2>
+        <label for="incNote">من أين</label>
+        <input id="incNote" type="text" placeholder="مثلا: بيع موتور">
+        <label for="incAmount">المبلغ (درهم)</label>
+        <input id="incAmount" type="number" inputmode="decimal" placeholder="2000">
+        <label for="incDate">التاريخ</label>
+        <input id="incDate" type="date">
+        <div class="err" id="incErr">دخل المبلغ والمصدر.</div>
+        <button onclick="addIncome()">إضافة الدخل</button>
+      </div>
+
+      <div class="card">
+        <h2>زيد مصروف</h2>
+        <label for="chargeScope">النوع</label>
+        <select id="chargeScope">
+          <option value="business">مصروف بيزنس</option>
+          <option value="personnel">مصروف شخصي</option>
+        </select>
+        <label for="chargeLabel">صرفتي فين / علاش</label>
+        <input id="chargeLabel" type="text" placeholder="مثلا: Marjane, Restaurant Mozart">
+        <label for="chargeAmount">المبلغ (درهم)</label>
+        <input id="chargeAmount" type="number" inputmode="decimal" placeholder="150">
+        <label for="chargeDate">التاريخ</label>
+        <input id="chargeDate" type="date">
+        <div class="err" id="chargeErr">دخل المبلغ والمكان.</div>
+        <button onclick="addCharge()">إضافة المصروف</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="section-top">
+        <h2 style="margin:0;">الربح مقابل المصاريف</h2>
+      </div>
+      <div class="tabs" id="periodTabs" style="margin-bottom:12px;">
+        <button data-p="day" class="active">يوم</button>
+        <button data-p="week">أسبوع</button>
+        <button data-p="month">شهر</button>
+      </div>
+      <div class="legend">
+        <span><span class="dot" style="background:#4f9d69"></span>الربح</span>
+        <span><span class="dot" style="background:#c1512f"></span>المصاريف</span>
+      </div>
+      <div class="chart-box"><canvas id="trendChart" role="img" aria-label="الربح والمصاريف خلال الفترة المختارة"></canvas></div>
+      <div class="insight" id="trendInsight"></div>
+    </div>
+
+    <div class="card">
+      <h2>فين كتخرج الفلوس</h2>
+      <div class="chart-box" style="height:200px;"><canvas id="catChart" role="img" aria-label="توزيع المصاريف حسب المكان"></canvas></div>
+      <div class="insight" id="catInsight"></div>
+    </div>
+
+    <div class="card">
+      <div class="section-top">
+        <h2 style="margin:0;">آخر الحركات</h2>
+        <button class="secondary" onclick="resetAll()">إعادة التصفير</button>
+      </div>
+      <div id="logList"></div>
+      <div class="empty" id="emptyLog" style="display:none;">مازال ما كاين والو. زيد دخل أو مصروف من فوق.</div>
+    </div>
+
+  </div>
+
+  <!-- ===== PAGE: ANALYSIS ===== -->
+  <div class="page" id="page-analysis">
+
+    <div class="card">
+      <h2>اختار يوم</h2>
+      <input id="dayPicker" type="date">
+    </div>
+
+    <div class="metrics">
+      <div class="metric profit">
+        <div class="label">الدخل ديال هاد اليوم</div>
+        <div class="value" id="dayIncome">0 DH</div>
+      </div>
+      <div class="metric charges">
+        <div class="label">المصاريف ديال هاد اليوم</div>
+        <div class="value" id="dayCharges">0 DH</div>
+      </div>
+      <div class="metric net">
+        <div class="label">الصافي ديال هاد اليوم</div>
+        <div class="value" id="dayNet">0 DH</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>وين المصاريف ديال هاد اليوم</h2>
+      <div class="chart-box" style="height:190px;"><canvas id="dayCatChart" role="img" aria-label="توزيع مصاريف اليوم المختار حسب المكان"></canvas></div>
+      <div class="empty" id="dayCatEmpty" style="display:none;">ما كاين حتى مصروف فهاد اليوم.</div>
+    </div>
+
+    <div class="card">
+      <h2>كل الحركات ديال هاد اليوم</h2>
+      <div id="dayLogList"></div>
+      <div class="empty" id="dayLogEmpty" style="display:none;">ما كاين حتى حركة فهاد اليوم.</div>
+    </div>
+
+    <div class="card">
+      <h2>السياق: الأسبوع والشهر ديال هاد اليوم</h2>
+      <div class="contextRow">
+        <div class="contextBox">
+          <div class="label" id="weekRangeLabel">هاد الأسبوع</div>
+          <div class="value" id="weekChargesVal">0 DH</div>
+        </div>
+        <div class="contextBox">
+          <div class="label" id="monthRangeLabel">هاد الشهر</div>
+          <div class="value" id="monthChargesVal">0 DH</div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+</div>
+
+<script>
+let incomes = [];
+let charges = [];
+let period = 'day';
+let trendChart, catChart, dayCatChart;
+let editing = null; // { kind: 'income'|'charge', id }
+
+function todayISO(){ return new Date().toISOString().slice(0,10); }
+function fmt(n){ return Math.round(n).toLocaleString('fr-FR') + ' DH'; }
+function uid(){ return Date.now().toString(36) + Math.random().toString(36).slice(2,6); }
+
+async function loadData(){
+  try{
+    const s = await window.storage.get('boukouz:income', false);
+    incomes = s ? JSON.parse(s.value) : [];
+  }catch(e){ incomes = []; }
+  try{
+    const c = await window.storage.get('boukouz:charges', false);
+    charges = c ? JSON.parse(c.value) : [];
+    charges.forEach(c => { if(c.category && !c.label){ c.label = c.category + (c.note ? (' — '+c.note) : ''); } });
+  }catch(e){ charges = []; }
+  renderAll();
+  renderDayAnalysis();
+}
+
+async function saveIncomes(){
+  try{ await window.storage.set('boukouz:income', JSON.stringify(incomes), false); }
+  catch(e){ console.error('خطأ فحفظ الدخل', e); }
+}
+async function saveCharges(){
+  try{ await window.storage.set('boukouz:charges', JSON.stringify(charges), false); }
+  catch(e){ console.error('خطأ فحفظ المصاريف', e); }
+}
+
+function addIncome(){
+  const note = document.getElementById('incNote').value.trim();
+  const amount = parseFloat(document.getElementById('incAmount').value);
+  const date = document.getElementById('incDate').value || todayISO();
+  const err = document.getElementById('incErr');
+  if(isNaN(amount) || amount <= 0 || !note){
+    err.style.display = 'block';
+    return;
+  }
+  err.style.display = 'none';
+  incomes.push({ id: uid(), date, note, amount });
+  document.getElementById('incNote').value = '';
+  document.getElementById('incAmount').value = '';
+  saveIncomes();
+  renderAll();
+  renderDayAnalysis();
+}
+
+function addCharge(){
+  const scope = document.getElementById('chargeScope').value;
+  const label = document.getElementById('chargeLabel').value.trim();
+  const amount = parseFloat(document.getElementById('chargeAmount').value);
+  const date = document.getElementById('chargeDate').value || todayISO();
+  const err = document.getElementById('chargeErr');
+  if(isNaN(amount) || amount <= 0 || !label){
+    err.style.display = 'block';
+    return;
+  }
+  err.style.display = 'none';
+  charges.push({ id: uid(), date, scope, label, amount });
+  document.getElementById('chargeLabel').value = '';
+  document.getElementById('chargeAmount').value = '';
+  saveCharges();
+  renderAll();
+  renderDayAnalysis();
+}
+
+function askDelete(kind, id){
+  const ok = confirm('متأكد باغي تمسح هاد الحركة؟ ما غاديش تقدر ترجعها من بعد.');
+  if(!ok) return;
+  if(kind === 'income'){ incomes = incomes.filter(s => s.id !== id); saveIncomes(); }
+  else { charges = charges.filter(c => c.id !== id); saveCharges(); }
+  editing = null;
+  renderAll();
+  renderDayAnalysis();
+}
+
+function startEdit(kind, id){
+  editing = { kind, id };
+  renderAll();
+  renderDayAnalysis();
+}
+function cancelEdit(){
+  editing = null;
+  renderAll();
+  renderDayAnalysis();
+}
+
+function saveEditIncome(id){
+  const note = document.getElementById('ef_note_'+id).value.trim();
+  const amount = parseFloat(document.getElementById('ef_amount_'+id).value);
+  const date = document.getElementById('ef_date_'+id).value;
+  if(!note || isNaN(amount) || amount <= 0 || !date) return;
+  const item = incomes.find(s => s.id === id);
+  item.note = note; item.amount = amount; item.date = date;
+  saveIncomes();
+  editing = null;
+  renderAll();
+  renderDayAnalysis();
+}
+
+function saveEditCharge(id){
+  const label = document.getElementById('ef_label_'+id).value.trim();
+  const amount = parseFloat(document.getElementById('ef_amount_'+id).value);
+  const date = document.getElementById('ef_date_'+id).value;
+  const scope = document.getElementById('ef_scope_'+id).value;
+  if(!label || isNaN(amount) || amount <= 0 || !date) return;
+  const item = charges.find(c => c.id === id);
+  item.label = label; item.amount = amount; item.date = date; item.scope = scope;
+  saveCharges();
+  editing = null;
+  renderAll();
+  renderDayAnalysis();
+}
+
+function resetAll(){
+  if(!confirm('باغي تمسح كل الدخل والمصاريف المسجلين؟ ما غاديش تقدر ترجعهم من بعد.')) return;
+  incomes = [];
+  charges = [];
+  saveIncomes();
+  saveCharges();
+  renderAll();
+  renderDayAnalysis();
+}
+
+function renderAll(){
+  document.getElementById('todayLabel').textContent = new Date().toLocaleDateString('ar-MA', { weekday:'long', day:'numeric', month:'long' });
+  renderMetrics();
+  renderTrend();
+  renderCategories();
+  renderLog();
+}
+
+function renderMetrics(){
+  const t = todayISO();
+  const profitToday = incomes.filter(s => s.date === t).reduce((a,s)=>a+s.amount,0);
+  const chargesToday = charges.filter(c => c.date === t).reduce((a,c)=>a+c.amount,0);
+  const net = profitToday - chargesToday;
+  document.getElementById('mProfit').textContent = fmt(profitToday);
+  document.getElementById('mCharges').textContent = fmt(chargesToday);
+  const netEl = document.getElementById('mNet');
+  netEl.textContent = (net>=0?'+':'') + fmt(net);
+  netEl.className = 'value ' + (net>=0?'pos':'neg');
+
+  const box = document.getElementById('verdictBox');
+  if(profitToday===0 && chargesToday===0){
+    box.className = 'verdict neutral';
+    box.textContent = 'دخل الربح والمصاريف ديال اليوم باش نعطيوك الحكم.';
+  } else if(net >= 0){
+    box.className = 'verdict pos';
+    box.textContent = 'اليوم راك رابح بـ ' + fmt(net) + '. حافظ على هاد الوتيرة.';
+  } else {
+    box.className = 'verdict neg';
+    box.textContent = 'اليوم راك خاسر بـ ' + fmt(Math.abs(net)) + '. شوف تحت فين صرفتي بزاف باش تنقص منها.';
+  }
+}
+
+function bucketKey(dateStr, p){
+  const d = new Date(dateStr + 'T00:00:00');
+  if(p === 'day') return dateStr;
+  if(p === 'week'){
+    const day = (d.getDay()+6)%7;
+    const monday = new Date(d); monday.setDate(d.getDate()-day);
+    return monday.toISOString().slice(0,10);
+  }
+  return dateStr.slice(0,7);
+}
+
+function weekRange(dateStr){
+  const d = new Date(dateStr+'T00:00:00');
+  const day = (d.getDay()+6)%7;
+  const monday = new Date(d); monday.setDate(d.getDate()-day);
+  const sunday = new Date(monday); sunday.setDate(monday.getDate()+6);
+  return { start: monday.toISOString().slice(0,10), end: sunday.toISOString().slice(0,10) };
+}
+
+function lastN(p){
+  if(p==='day') return 14;
+  if(p==='week') return 8;
+  return 6;
+}
+
+function buildBuckets(p){
+  const n = lastN(p);
+  const buckets = [];
+  const today = new Date();
+  for(let i=n-1;i>=0;i--){
+    const d = new Date(today);
+    if(p==='day') d.setDate(today.getDate()-i);
+    else if(p==='week') d.setDate(today.getDate()-i*7);
+    else d.setMonth(today.getMonth()-i);
+    const iso = d.toISOString().slice(0,10);
+    buckets.push(bucketKey(iso, p));
+  }
+  return [...new Set(buckets)];
+}
+
+function labelFor(key,p){
+  if(p==='month'){
+    const [y,m] = key.split('-');
+    return new Date(y, m-1, 1).toLocaleDateString('ar-MA',{month:'short',year:'2-digit'});
+  }
+  const d = new Date(key+'T00:00:00');
+  return d.toLocaleDateString('ar-MA',{day:'numeric',month:'short'});
+}
+
+function renderTrend(){
+  const buckets = buildBuckets(period);
+  const profitByBucket = {};
+  const chargesByBucket = {};
+  incomes.forEach(s => {
+    const k = bucketKey(s.date, period);
+    profitByBucket[k] = (profitByBucket[k]||0) + s.amount;
+  });
+  charges.forEach(c => {
+    const k = bucketKey(c.date, period);
+    chargesByBucket[k] = (chargesByBucket[k]||0) + c.amount;
+  });
+  const profitData = buckets.map(k => profitByBucket[k]||0);
+  const chargesData = buckets.map(k => chargesByBucket[k]||0);
+  const labels = buckets.map(k => labelFor(k,period));
+
+  const ctx = document.getElementById('trendChart');
+  if(trendChart) trendChart.destroy();
+  trendChart = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels,
+      datasets: [
+        { label:'الربح', data: profitData, backgroundColor:'#4f9d69', borderRadius:4, maxBarThickness:22 },
+        { label:'المصاريف', data: chargesData, backgroundColor:'#c1512f', borderRadius:4, maxBarThickness:22 }
+      ]
+    },
+    options: {
+      responsive:true, maintainAspectRatio:false,
+      plugins:{ legend:{ display:false } },
+      scales:{
+        x:{ ticks:{ color:'#9b9c9e', font:{size:10}, maxRotation:0, autoSkip:true, maxTicksLimit:7 }, grid:{ display:false } },
+        y:{ ticks:{ color:'#9b9c9e', font:{size:10}, callback:(v)=>v.toLocaleString('fr-FR') }, grid:{ color:'rgba(255,255,255,0.06)' } }
+      }
+    }
+  });
+
+  const totalProfit = profitData.reduce((a,b)=>a+b,0);
+  const totalCharges = chargesData.reduce((a,b)=>a+b,0);
+  const netTotal = totalProfit - totalCharges;
+  const periodLabel = period==='day' ? 'فآخر 14 يوم' : period==='week' ? 'فآخر 8 سيمانات' : 'فآخر 6 أشهر';
+  const insight = document.getElementById('trendInsight');
+  if(totalProfit===0 && totalCharges===0){
+    insight.innerHTML = 'مازال ما كاين حتى بيانات ' + periodLabel + '.';
+  } else {
+    insight.innerHTML = periodLabel + '، دخلتي <b>' + fmt(totalProfit) + '</b> وصرفتي <b>' + fmt(totalCharges) + '</b> — الصافي ' + (netTotal>=0?'رابح':'خاسر') + ' بـ <b>' + fmt(Math.abs(netTotal)) + '</b>.';
+  }
+}
+
+function groupByLabel(list){
+  const totals = {};
+  list.forEach(c => {
+    const key = (c.label || 'أخرى').trim();
+    totals[key] = (totals[key]||0) + c.amount;
+  });
+  return Object.entries(totals).sort((a,b)=>b[1]-a[1]);
+}
+
+function renderCategories(){
+  const buckets = new Set(buildBuckets(period));
+  const inRange = charges.filter(c => buckets.has(bucketKey(c.date, period)));
+  const bizTotal = inRange.filter(c=>c.scope==='business').reduce((a,c)=>a+c.amount,0);
+  const persTotal = inRange.filter(c=>c.scope==='personnel').reduce((a,c)=>a+c.amount,0);
+  const entries = groupByLabel(inRange);
+
+  const ctx = document.getElementById('catChart');
+  if(catChart) catChart.destroy();
+  catChart = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: entries.map(e=>e[0]),
+      datasets: [{ data: entries.map(e=>e[1]), backgroundColor:'#c7962c', borderRadius:4, maxBarThickness:18 }]
+    },
+    options:{
+      indexAxis:'y',
+      responsive:true, maintainAspectRatio:false,
+      plugins:{ legend:{ display:false } },
+      scales:{
+        x:{ ticks:{ color:'#9b9c9e', font:{size:10} }, grid:{ color:'rgba(255,255,255,0.06)' } },
+        y:{ ticks:{ color:'#9b9c9e', font:{size:11} }, grid:{ display:false } }
+      }
+    }
+  });
+
+  const insight = document.getElementById('catInsight');
+  if(entries.length===0){
+    insight.innerHTML = 'ما كاين حتى مصروف مسجل فهاد الفترة.';
+  } else {
+    const top = entries.slice(0,3);
+    const phrases = top.map(e => 'خسرتي <b>' + fmt(e[1]) + '</b> فـ <b>' + e[0] + '</b>');
+    let msg = phrases.join('، ') + '.';
+    msg += ' بيزنس: <b>' + fmt(bizTotal) + '</b> — شخصي: <b>' + fmt(persTotal) + '</b>.';
+    insight.innerHTML = msg;
+  }
+}
+
+function renderLog(){
+  const rows = [
+    ...incomes.map(s => ({ id:s.id, date:s.date, kind:'income', detail:s.note, amount:s.amount, scope:null })),
+    ...charges.map(c => ({ id:c.id, date:c.date, kind:'charge', scope:c.scope, detail:c.label, amount:-c.amount }))
+  ].sort((a,b) => b.date.localeCompare(a.date)).slice(0,25);
+
+  renderLogList(rows, 'logList', 'emptyLog');
+}
+
+function renderEditForm(kind, item){
+  const wrap = document.createElement('div');
+  wrap.className = 'editForm';
+  if(kind === 'income'){
+    wrap.innerHTML =
+      '<label>من أين</label><input id="ef_note_'+item.id+'" type="text" value="'+item.note.replace(/"/g,'&quot;')+'">' +
+      '<div class="row2">' +
+        '<div><label>المبلغ</label><input id="ef_amount_'+item.id+'" type="number" value="'+item.amount+'"></div>' +
+        '<div><label>التاريخ</label><input id="ef_date_'+item.id+'" type="date" value="'+item.date+'"></div>' +
+      '</div>' +
+      '<div class="actions"><button onclick="saveEditIncome(\''+item.id+'\')">حفظ</button><button class="cancel" onclick="cancelEdit()">إلغاء</button></div>';
+  } else {
+    wrap.innerHTML =
+      '<label>النوع</label><select id="ef_scope_'+item.id+'">' +
+        '<option value="business"'+(item.scope==='business'?' selected':'')+'>مصروف بيزنس</option>' +
+        '<option value="personnel"'+(item.scope==='personnel'?' selected':'')+'>مصروف شخصي</option>' +
+      '</select>' +
+      '<label>صرفتي فين / علاش</label><input id="ef_label_'+item.id+'" type="text" value="'+item.label.replace(/"/g,'&quot;')+'">' +
+      '<div class="row2">' +
+        '<div><label>المبلغ</label><input id="ef_amount_'+item.id+'" type="number" value="'+item.amount+'"></div>' +
+        '<div><label>التاريخ</label><input id="ef_date_'+item.id+'" type="date" value="'+item.date+'"></div>' +
+      '</div>' +
+      '<div class="actions"><button onclick="saveEditCharge(\''+item.id+'\')">حفظ</button><button class="cancel" onclick="cancelEdit()">إلغاء</button></div>';
+  }
+  return wrap;
+}
+
+function renderLogList(rows, listId, emptyId){
+  const list = document.getElementById(listId);
+  const empty = document.getElementById(emptyId);
+  list.innerHTML = '';
+  if(rows.length===0){ empty.style.display='block'; return; }
+  empty.style.display='none';
+
+  rows.forEach(r => {
+    if(editing && editing.id === r.id && editing.kind === r.kind){
+      const source = r.kind === 'income' ? incomes.find(x=>x.id===r.id) : charges.find(x=>x.id===r.id);
+      list.appendChild(renderEditForm(r.kind, source));
+      return;
+    }
+
+    const row = document.createElement('div');
+    row.className = 'logRow';
+
+    const main = document.createElement('div');
+    main.className = 'logMain';
+    const top = document.createElement('div');
+    top.className = 'logTop';
+    const tag = document.createElement('span');
+    if(r.kind==='income'){
+      tag.className = 'tag income';
+      tag.textContent = 'دخل';
+    } else {
+      tag.className = 'tag ' + (r.scope==='business'?'biz':'pers');
+      tag.textContent = r.scope==='business' ? 'بيزنس' : 'شخصي';
+    }
+    const dateSpan = document.createElement('span');
+    dateSpan.className = 'logDate';
+    dateSpan.textContent = new Date(r.date+'T00:00:00').toLocaleDateString('ar-MA',{day:'numeric',month:'short'});
+    top.append(tag, dateSpan);
+    const detail = document.createElement('div');
+    detail.className = 'logDetail';
+    detail.textContent = r.detail;
+    main.append(top, detail);
+
+    const amt = document.createElement('div');
+    amt.className = 'amt ' + (r.amount>=0?'pos':'neg');
+    amt.textContent = (r.amount>=0?'+':'') + fmt(r.amount);
+
+    const editBtn = document.createElement('button');
+    editBtn.className = 'iconBtn';
+    editBtn.setAttribute('aria-label','تعديل');
+    editBtn.textContent = '✎';
+    editBtn.onclick = () => startEdit(r.kind, r.id);
+
+    const delBtn = document.createElement('button');
+    delBtn.className = 'iconBtn del';
+    delBtn.setAttribute('aria-label','حذف');
+    delBtn.textContent = '✕';
+    delBtn.onclick = () => askDelete(r.kind, r.id);
+
+    row.append(main, amt, editBtn, delBtn);
+    list.appendChild(row);
+  });
+}
+
+function renderDayAnalysis(){
+  const picked = document.getElementById('dayPicker').value || todayISO();
+  const dayIncomes = incomes.filter(s => s.date === picked);
+  const dayCharges = charges.filter(c => c.date === picked);
+  const incomeTotal = dayIncomes.reduce((a,s)=>a+s.amount,0);
+  const chargesTotal = dayCharges.reduce((a,c)=>a+c.amount,0);
+  const net = incomeTotal - chargesTotal;
+
+  document.getElementById('dayIncome').textContent = fmt(incomeTotal);
+  document.getElementById('dayCharges').textContent = fmt(chargesTotal);
+  const netEl = document.getElementById('dayNet');
+  netEl.textContent = (net>=0?'+':'') + fmt(net);
+  netEl.className = 'value ' + (net>=0?'pos':'neg');
+
+  const entries = groupByLabel(dayCharges);
+  const ctx = document.getElementById('dayCatChart');
+  const emptyEl = document.getElementById('dayCatEmpty');
+  if(dayCatChart) dayCatChart.destroy();
+  if(entries.length === 0){
+    ctx.style.display = 'none';
+    emptyEl.style.display = 'block';
+  } else {
+    ctx.style.display = 'block';
+    emptyEl.style.display = 'none';
+    dayCatChart = new Chart(ctx, {
+      type:'bar',
+      data:{
+        labels: entries.map(e=>e[0]),
+        datasets:[{ data: entries.map(e=>e[1]), backgroundColor:'#c7962c', borderRadius:4, maxBarThickness:18 }]
+      },
+      options:{
+        indexAxis:'y',
+        responsive:true, maintainAspectRatio:false,
+        plugins:{ legend:{ display:false } },
+        scales:{
+          x:{ ticks:{ color:'#9b9c9e', font:{size:10} }, grid:{ color:'rgba(255,255,255,0.06)' } },
+          y:{ ticks:{ color:'#9b9c9e', font:{size:11} }, grid:{ display:false } }
+        }
+      }
+    });
+  }
+
+  const dayRows = [
+    ...dayIncomes.map(s => ({ id:s.id, date:s.date, kind:'income', detail:s.note, amount:s.amount, scope:null })),
+    ...dayCharges.map(c => ({ id:c.id, date:c.date, kind:'charge', scope:c.scope, detail:c.label, amount:-c.amount }))
+  ];
+  renderLogList(dayRows, 'dayLogList', 'dayLogEmpty');
+
+  const wr = weekRange(picked);
+  const weekChargesTotal = charges.filter(c => c.date >= wr.start && c.date <= wr.end).reduce((a,c)=>a+c.amount,0);
+  const monthKey = picked.slice(0,7);
+  const monthChargesTotal = charges.filter(c => c.date.slice(0,7) === monthKey).reduce((a,c)=>a+c.amount,0);
+  const startLabel = new Date(wr.start+'T00:00:00').toLocaleDateString('ar-MA',{day:'numeric',month:'short'});
+  const endLabel = new Date(wr.end+'T00:00:00').toLocaleDateString('ar-MA',{day:'numeric',month:'short'});
+  document.getElementById('weekRangeLabel').textContent = 'الأسبوع (' + startLabel + ' — ' + endLabel + ')';
+  document.getElementById('weekChargesVal').textContent = fmt(weekChargesTotal);
+  const monthLabel = new Date(picked+'T00:00:00').toLocaleDateString('ar-MA',{month:'long',year:'numeric'});
+  document.getElementById('monthRangeLabel').textContent = 'شهر ' + monthLabel;
+  document.getElementById('monthChargesVal').textContent = fmt(monthChargesTotal);
+}
+
+document.getElementById('periodTabs').addEventListener('click', (e) => {
+  const btn = e.target.closest('button');
+  if(!btn) return;
+  document.querySelectorAll('#periodTabs button').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  period = btn.dataset.p;
+  renderTrend();
+  renderCategories();
+});
+
+document.querySelectorAll('.navtabs button').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.navtabs button').forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active');
+    document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+    document.getElementById('page-' + btn.dataset.page).classList.add('active');
+    editing = null;
+    if(btn.dataset.page === 'analysis') renderDayAnalysis();
+  });
+});
+
+document.getElementById('dayPicker').addEventListener('change', renderDayAnalysis);
+
+document.getElementById('incDate').value = todayISO();
+document.getElementById('chargeDate').value = todayISO();
+document.getElementById('dayPicker').value = todayISO();
+
+loadData();
+</script>
+</body>
+</html>
